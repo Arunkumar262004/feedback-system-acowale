@@ -41,8 +41,29 @@ app.use(
       // If no allowed origins configured, allow all (permissive fallback)
       if (allowedOrigins.length === 0) return callback(null, true);
 
-      // Allow if the requesting origin is in the allowed list
-      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // Check if origin matches allowed list (supporting simple wildcards like *)
+      const isAllowed = allowedOrigins.some((allowed) => {
+        if (allowed === origin) return true;
+        
+        if (allowed.includes('*')) {
+          const regexString = '^' + allowed
+            .replace(/[.+^${}()|[\]\\]/g, '\\$&') // escape all regex chars except *
+            .replace(/\*/g, '[a-zA-Z0-9-]+') // replace * with alphanumeric/hyphen matcher
+            + '$';
+          const regex = new RegExp(regexString);
+          return regex.test(origin);
+        }
+        return false;
+      });
+
+      if (isAllowed) return callback(null, true);
+
+      // Automatically allow Vercel deployments/previews of this project
+      const isVercelDeploy = /^https:\/\/feedback-system-acowale-[a-zA-Z0-9-]+\.vercel\.app$/.test(origin) ||
+                             origin === 'https://feedback-system-acowale.vercel.app';
+      if (isVercelDeploy) {
+        return callback(null, true);
+      }
 
       // In local development, automatically allow localhost origins
       const isLocalhost = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin);
@@ -50,8 +71,9 @@ app.use(
         return callback(null, true);
       }
 
-      // Otherwise, reject the request
-      return callback(new Error(`CORS blocked for origin: ${origin}`));
+      // Otherwise, reject the request (using null, false to avoid Express 500 error on preflight)
+      logger.warn(`CORS blocked for origin: ${origin}`);
+      return callback(null, false);
     },
     credentials: true,
   })
