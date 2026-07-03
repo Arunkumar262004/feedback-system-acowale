@@ -14,7 +14,7 @@ Built on the **PERN stack** — PostgreSQL, Express, React, Node.js.
 | **Live App (frontend)** | `https://<your-app>.vercel.app` |
 | **Live API (backend)** | `https://<your-app>.onrender.com/api` |
 | **API Health Check** | `https://<your-app>.onrender.com/api/health` |
-| **Source Code** | this repository |
+| **Source Code** | [Arunkumar262004/feedback-system-acowale](https://github.com/Arunkumar262004/feedback-system-acowale) |
 
 > Replace the placeholders above once deployed (see [Deployment](#deployment) below).
 
@@ -79,7 +79,7 @@ Full rationale in [`DECISIONS.md`](./DECISIONS.md).
 - REST APIs: submit feedback, fetch feedback (paginated/filterable), analytics summary
 
 **Production readiness**
-- Environment variables (`.env.example` in both apps)
+- Environment variables (`.env` in both apps)
 - Centralized error handling with consistent JSON error shape
 - Input validation on every write endpoint (`express-validator`)
 - Structured logging (`winston` + `morgan`)
@@ -99,42 +99,67 @@ Full rationale in [`DECISIONS.md`](./DECISIONS.md).
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL 16 (or use `docker-compose up db`)
+- Docker and Docker Compose
 
-### 1. Database
-```bash
-docker-compose up -d db
-```
+### 1. Database Setup
+The application is configured to connect to a local **PostgreSQL database** running in Docker.
+1. Spin up the local database container:
+   ```bash
+   docker compose up -d db
+   ```
+   This starts the PostgreSQL instance on port `5433`.
 
-### 2. Backend
-```bash
-cd backend
-cp .env.example .env      # edit DATABASE_URL etc. if not using docker-compose defaults
-npm install
-npm run migrate           # creates tables + seeds admin user from .env
-npm run dev                # http://localhost:5000
-```
+### 2. Backend Setup
+1. Navigate to the backend directory:
+   ```bash
+   cd backend
+   ```
+2. Ensure your `.env` file is present (the connection string `DATABASE_URL` should point to your local PostgreSQL instance: `postgresql://acowale:acowale@localhost:5433/acowale_crm`).
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Run migrations (this will create tables and seed the default admin account on the local database):
+   ```bash
+   npm run migrate
+   ```
+5. Start the development server (runs by default on port `5002`):
+   ```bash
+   npm run dev
+   ```
 
-### 3. Frontend
-```bash
-cd frontend
-cp .env.example .env      # VITE_API_URL=http://localhost:5000/api
-npm install
-npm run dev                # http://localhost:5173
-```
+### 3. Frontend Setup
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Ensure your `.env` file is present. For local development, it should point to your local backend API:
+   ```env
+   VITE_API_URL=http://localhost:5002/api
+   ```
+3. Install dependencies:
+   ```bash
+   npm install
+   ```
+4. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   The frontend application will be running at `http://localhost:5173`.
 
-### 4. Run tests
+### 4. Run Tests
+To run backend unit tests (uses database mocks so no live connection is required):
 ```bash
 cd backend
 npm test
 ```
 
-### Default admin login (from `.env.example`)
+### Default Admin Login (from backend/.env)
 ```
 email: admin@acowale.com
-password: ChangeMe123!
+password: Admin@123
 ```
-Change these in production via the `ADMIN_EMAIL` / `ADMIN_PASSWORD` env vars before the first `npm run migrate`.
+You can customize these credentials in `backend/.env` before running migrations for the first time.
 
 ---
 
